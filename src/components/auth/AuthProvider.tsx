@@ -37,6 +37,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [authInitialized, setAuthInitialized] = useState(false);
 
   useEffect(() => {
+    if (!auth) {
+      // Fallback: Restore session from cookie in Demo Mode
+      const match = typeof document !== "undefined" ? document.cookie.match(/(?:^|; )auth-role=([^;]*)/) : null;
+      const role = match ? match[1] : null;
+      
+      if (role) {
+        const demoUser = DEMO_USERS.find(u => u.role === role);
+        setUser({
+          uid: `demo-${role}`,
+          email: demoUser?.email || `${role}@stitchconnect.com`,
+          displayName: demoUser?.name || `Demo ${role}`,
+          fullName: demoUser?.name || `Demo ${role}`,
+          avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=100",
+          photoURL: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=100",
+          role: role as any,
+        });
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+      setAuthInitialized(true);
+      return;
+    }
+
     // Listen to Firebase Auth state
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
@@ -84,9 +108,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, [setUser, setLoading]);
+  }, [setUser, setLoading, authInitialized]);
 
   const login = async (email: string, password: string) => {
+    if (!auth) {
+      const demoUser = DEMO_USERS.find(u => u.email === email && u.password === password);
+      if (demoUser) {
+        setUser({
+          uid: `demo-${demoUser.role}`,
+          email: demoUser.email,
+          displayName: demoUser.name,
+          fullName: demoUser.name,
+          avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=100",
+          photoURL: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=100",
+          role: demoUser.role as any,
+        });
+        document.cookie = `auth-role=${demoUser.role}; path=/; max-age=86400`; // 1 day
+        toast.success(`Logged in as ${demoUser.name} (Demo)`);
+        return true;
+      }
+      toast.error("Firebase is not configured and this is not a demo account.");
+      return false;
+    }
+
     try {
       // Authenticate with Firebase using real credentials
       await authService.login(email, password);

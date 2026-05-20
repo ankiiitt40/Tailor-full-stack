@@ -131,7 +131,9 @@ export const authService = {
   // Logout
   async logout() {
     try {
-      await signOut(auth);
+      if (auth) {
+        await signOut(auth);
+      }
       useAuthStore.getState().logout();
     } catch (error) {
       console.error("Logout error:", error);

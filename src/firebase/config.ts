@@ -17,8 +17,20 @@ const firebaseConfig = {
 
 // Initialize Firebase only if it hasn't been initialized already and API key is present
 let app: any = null;
-if (typeof window !== "undefined" || process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
-  app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const hasApiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY && 
+                  process.env.NEXT_PUBLIC_FIREBASE_API_KEY !== "undefined" && 
+                  process.env.NEXT_PUBLIC_FIREBASE_API_KEY.trim() !== "";
+
+if (hasApiKey) {
+  try {
+    app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+  } catch (error) {
+    console.error("Error initializing Firebase App:", error);
+  }
+} else {
+  if (typeof window !== "undefined") {
+    console.warn("Firebase configuration variables are missing. App is running in local Demo Mode.");
+  }
 }
 
 export const auth = app ? getAuth(app) : null as any;
