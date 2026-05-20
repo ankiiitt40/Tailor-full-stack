@@ -5,6 +5,10 @@ interface UIState {
   toggleSidebar: () => void;
   setSidebarOpen: (isOpen: boolean) => void;
   
+  // Layout preference: 'sidebar' | 'vercel'
+  layoutPreference: 'sidebar' | 'vercel';
+  setLayoutPreference: (pref: 'sidebar' | 'vercel') => void;
+  
   // Global modal state
   activeModal: string | null;
   modalData: Record<string, unknown> | null;
@@ -16,6 +20,9 @@ export const useUIStore = create<UIState>((set) => ({
   isSidebarOpen: true,
   toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
   setSidebarOpen: (isOpen) => set({ isSidebarOpen: isOpen }),
+  
+  layoutPreference: "vercel", // Default to vercel layout!
+  setLayoutPreference: (pref) => set({ layoutPreference: pref }),
   
   activeModal: null,
   modalData: null,
